@@ -1,84 +1,131 @@
 #!/usr/bin/env bash
-# share-task-skill 安装脚本
-# 自动检测 AI CLI 工具并安装到对应 skills 目录
+# share-task-skill 安装脚本（plugin 模式）
+# 将 skill 注册为本地 plugin，支持 Claude Code 的 plugin-name:skill-name 格式
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SKILL_NAME="share-task"
+PLUGIN_NAME="share-task"
+CLAUDE_PLUGINS_DIR="$HOME/.claude/plugins"
+INSTALLED_JSON="${CLAUDE_PLUGINS_DIR}/installed_plugins.json"
+INSTALL_PATH="${CLAUDE_PLUGINS_DIR}/${PLUGIN_NAME}"
 
-# 检测已安装的 AI CLI 工具
-detect_platforms() {
-  local found=()
-  [[ -d "$HOME/.claude/skills" ]] && found+=("claude:$HOME/.claude/skills")
-  [[ -d "$HOME/.opencode/skills" ]] && found+=("opencode:$HOME/.opencode/skills")
-  [[ -d "$HOME/.cursor/skills" ]] && found+=("cursor:$HOME/.cursor/skills")
+# 检测目标安装方式
+detect_install_mode() {
+  # 如果 isoftstone-skills 目录下，用软链接
+  local canonical_src
+  canonical_src="$(cd "$SCRIPT_DIR" && pwd)"
 
-  if [[ ${#found[@]} -eq 0 ]]; then
-    echo "未检测到支持的 AI CLI 工具（claude / opencode / cursor）"
-    echo "请手动指定安装路径："
-    echo "  $0 --target /path/to/skills/dir"
-    exit 1
+  if [[ "$canonical_src" != "$INSTALL_PATH" ]]; then
+    echo "symlink"
+  else
+    echo "direct"
   fi
-
-  echo "检测到以下 AI CLI 工具："
-  for item in "${found[@]}"; do
-    local name="${item%%:*}"
-    local path="${item##*:}"
-    echo "  - $name ($path)"
-  done
 }
 
-install_to() {
-  local target="$1"
-  local dest="${target}/${SKILL_NAME}"
+# 安装到 ~/.claude/plugins/
+install_plugin() {
+  local mode
+  mode="$(detect_install_mode)"
 
-  if [[ -d "$dest" ]]; then
-    echo "目标已存在: $dest"
-    read -rp "是否覆盖？(y/N): " confirm
-    [[ "$confirm" != "y" && "$confirm" != "Y" ]] && echo "已取消" && exit 0
-    rm -rf "$dest"
+  mkdir -p "$CLAUDE_PLUGINS_DIR"
+
+  # 创建指向源目录的软链接（或直接拷贝）
+  if [[ "$mode" == "symlink" ]]; then
+    if [[ -L "$INSTALL_PATH" ]]; then
+      echo "软链接已存在: $INSTALL_PATH -> $(readlink "$INSTALL_PATH")"
+    elif [[ -d "$INSTALL_PATH" ]]; then
+      echo "目标目录已存在: $INSTALL_PATH（非软链接），将覆盖"
+      rm -rf "$INSTALL_PATH"
+      ln -s "$SCRIPT_DIR" "$INSTALL_PATH"
+      echo "已替换为软链接: $INSTALL_PATH -> $SCRIPT_DIR"
+    else
+      ln -s "$SCRIPT_DIR" "$INSTALL_PATH"
+      echo "已创建软链接: $INSTALL_PATH -> $SCRIPT_DIR"
+    fi
+  else
+    echo "源目录即安装目录，无需操作"
   fi
 
-  cp -r "$SCRIPT_DIR" "$dest"
-  chmod +x "$dest/scripts/sync-index.sh"
-  echo "已安装到: $dest"
+  # 注册到 installed_plugins.json
+  register_plugin
+}
+
+# 注册到 installed_plugins.json
+register_plugin() {
+  local now
+  now="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+
+  if [[ ! -f "$INSTALLED_JSON" ]]; then
+    echo '{"version":2,"plugins":{}}' > "$INSTALLED_JSON"
+  fi
+
+  # 用 node 来安全地操作 JSON
+  node -e "
+    const fs = require('fs');
+    const path = '$INSTALLED_JSON';
+    const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+    const key = '${PLUGIN_NAME}@local';
+    data.plugins[key] = [{
+      scope: 'user',
+      installPath: '$INSTALL_PATH',
+      version: '1.0.0',
+      installedAt: '${now}',
+      lastUpdated: '${now}',
+      gitCommitSha: 'local'
+    }];
+
+    fs.writeFileSync(path, JSON.stringify(data, null, 2) + '\n');
+    console.log('已注册到 installed_plugins.json: ' + key);
+  "
+
+  # 确保旧 skills 目录不存在（避免冲突）
+  local old_skill="$HOME/.claude/skills/${PLUGIN_NAME}"
+  if [[ -d "$old_skill" ]]; then
+    rm -rf "$old_skill"
+    echo "已清理旧 skill 目录: $old_skill"
+  fi
+}
+
+# 卸载
+uninstall() {
+  # 移除软链接或目录
+  if [[ -L "$INSTALL_PATH" || -d "$INSTALL_PATH" ]]; then
+    rm -rf "$INSTALL_PATH"
+    echo "已移除: $INSTALL_PATH"
+  fi
+
+  # 从 installed_plugins.json 移除
+  node -e "
+    const fs = require('fs');
+    const path = '$INSTALLED_JSON';
+    if (!fs.existsSync(path)) return;
+    const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+    delete data.plugins['${PLUGIN_NAME}@local'];
+    fs.writeFileSync(path, JSON.stringify(data, null, 2) + '\n');
+    console.log('已从 installed_plugins.json 移除');
+  "
+
+  echo "卸载完成"
 }
 
 # 主逻辑
-if [[ "${1:-}" == "--target" ]]; then
-  [[ -z "${2:-}" ]] && echo "用法: $0 --target /path/to/skills/dir" && exit 1
-  install_to "$2"
-else
-  detect_platforms
-  echo ""
-  read -rp "输入要安装的平台名称（如 claude），或输入 all 安装到所有检测到的平台: " choice
-
-  if [[ "$choice" == "all" ]]; then
-    for item in $(detect_platforms); do
-      local name="${item%%:*}"
-      local path="${item##*:}"
-      install_to "$path"
-    done
-  else
-    local found_path=""
-    for item in $(detect_platforms); do
-      local name="${item%%:*}"
-      local path="${item##*:}"
-      if [[ "$name" == "$choice" ]]; then
-        found_path="$path"
-        break
-      fi
-    done
-
-    if [[ -z "$found_path" ]]; then
-      echo "未找到平台: $choice"
-      echo "用法: $0 --target /path/to/skills/dir"
-      exit 1
-    fi
-
-    install_to "$found_path"
-  fi
-fi
-
-echo "安装完成！使用方式: 在 AI CLI 中输入 share-task:start {口令} {平台名}"
+case "${1:-install}" in
+  install)
+    install_plugin
+    echo ""
+    echo "安装完成！重启 Claude Code 后生效。"
+    echo "可用命令："
+    echo "  /share-task:start {口令} {平台名}"
+    echo "  /share-task:set"
+    echo "  /share-task:get {口令} {平台名}"
+    echo "  /share-task:clear"
+    ;;
+  uninstall)
+    uninstall
+    ;;
+  *)
+    echo "用法: $0 [install|uninstall]"
+    ;;
+esac
