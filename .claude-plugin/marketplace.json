@@ -1,0 +1,22 @@
+{
+  "name": "isoftstone-skills",
+  "owner": {
+    "name": "mazhenxiao"
+  },
+  "metadata": {
+    "description": "iSoftStone shared skills for AI CLI tools",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "share-task",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/mazhenxiao/isoftstone-skills.git",
+        "path": "share-task-skill"
+      },
+      "description": "跨 AI CLI 平台的任务共享工具，通过文件级黑板共享任务上下文和会话摘要",
+      "version": "1.0.0"
+    }
+  ]
+}
