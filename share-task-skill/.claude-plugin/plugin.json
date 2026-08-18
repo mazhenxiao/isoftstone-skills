@@ -1,0 +1,7 @@
+{
+  "name": "share-task",
+  "description": "跨 AI CLI 平台的任务共享工具，通过文件级黑板共享任务上下文和会话摘要",
+  "author": {
+    "name": "mazhenxiao"
+  }
+}

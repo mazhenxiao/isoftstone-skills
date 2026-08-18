@@ -11,7 +11,7 @@
     {
       "name": "share-task",
       "source": {
-        "source": "url",
+        "source": "git-subdir",
         "url": "https://github.com/mazhenxiao/isoftstone-skills.git",
         "path": "share-task-skill"
       },

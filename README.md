@@ -1,23 +1,21 @@
-# share-task-skill
+# isoftstone-skills
 
-跨 AI CLI 平台的任务共享工具。通过文件级黑板，在不同 AI 工具（Claude Code、OpenCode、Cursor 等）之间共享任务上下文和会话摘要。
-
-## 功能
-
-- **start** — 初始化任务，设置口令和平台名
-- **set** — 生成当前会话摘要并写入共享黑板
-- **get** — 读取其他平台的摘要，注入当前上下文
-- **clear** — 清除指定任务或全部任务
+iSoftStone 共享 Skills 合集，跨 AI CLI 平台使用。
 
 ## 安装
 
-### Claude Code
+### Claude Code（推荐：Marketplace 方式）
 
-```
-/plugin add https://github.com/mazhenxiao/isoftstone-skills/tree/main/share-task-skill
+```bash
+# 1. 注册 marketplace
+/plugin marketplace add mazhenxiao/isoftstone-skills
+
+# 2. 安装插件
+/plugin install share-task@isoftstone-skills
 ```
 
-或手动安装：
+### Claude Code（手动 symlink）
+
 ```bash
 ln -s ~/isoftstone-skills/share-task-skill ~/.claude/skills/share-task
 ```
@@ -28,20 +26,18 @@ ln -s ~/isoftstone-skills/share-task-skill ~/.claude/skills/share-task
 ln -s ~/isoftstone-skills/share-task-skill ~/.opencode/skills/share-task
 ```
 
-### 通用安装脚本
+## 插件列表
 
-```bash
-# 克隆仓库
-git clone git@github.com:mazhenxiao/isoftstone-skills.git ~/isoftstone-skills
+### share-task
 
-# 运行安装脚本（自动检测平台）
-bash ~/isoftstone-skills/share-task-skill/install.sh
+跨 AI CLI 平台的任务共享工具。通过文件级黑板，在不同 AI 工具（Claude Code、OpenCode、Cursor 等）之间共享任务上下文和会话摘要。
 
-# 或指定目标路径
-bash ~/isoftstone-skills/share-task-skill/install.sh --target /path/to/skills/dir
-```
+- **start** — 初始化任务，设置口令和平台名
+- **set** — 生成当前会话摘要并写入共享黑板
+- **get** — 读取其他平台的摘要，注入当前上下文
+- **clear** — 清除指定任务或全部任务
 
-## 使用示例
+#### 使用示例
 
 ```bash
 # 在 Claude Code 中初始化任务
@@ -57,7 +53,7 @@ share-task:get mzx claude
 share-task:clear mzx claude
 ```
 
-## 工作原理
+#### 工作原理
 
 ```
 {blackboard}/
