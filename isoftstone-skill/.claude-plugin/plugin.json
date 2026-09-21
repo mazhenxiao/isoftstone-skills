@@ -1,5 +1,5 @@
 {
-  "name": "isoftstone-debug-recovery",
+  "name": "isoftstone",
   "description": "Bug 修复编排工作流：debugging-and-error-recovery 根因分析→用户确认方案→修复→requesting-code-review 审查；自动区分前端/后端/双端问题，双端派发前后端独立 subagent 串行执行（接口变更先后端再前端），TaskList 跟踪状态、文件黑板交接",
   "author": {
     "name": "mazhenxiao"

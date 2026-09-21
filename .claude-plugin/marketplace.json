@@ -19,11 +19,11 @@
       "version": "1.0.0"
     },
     {
-      "name": "isoftstone-debug-recovery",
+      "name": "isoftstone",
       "source": {
         "source": "git-subdir",
         "url": "https://github.com/mazhenxiao/isoftstone-skills.git",
-        "path": "isoftstone-debug-recovery-skill"
+        "path": "isoftstone-skill"
       },
       "description": "Bug 修复编排工作流：根因分析→用户确认→修复→code review；自动区分前端/后端/双端，双端派发前后端 subagent 串行执行（TaskList+文件黑板交接）",
       "version": "1.0.0"

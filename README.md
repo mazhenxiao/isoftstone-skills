@@ -10,7 +10,7 @@ iSoftStone 共享 Skills 合集，跨 AI CLI 平台使用。
 
 # 2. 安装插件
 /plugin install share-task@isoftstone-skills
-/plugin install isoftstone-debug-recovery@isoftstone-skills
+/plugin install isoftstone@isoftstone-skills
 ```
 
 也可 clone 本仓库后直接使用：`bash share-task-skill/install.sh install`。
@@ -48,18 +48,20 @@ iSoftStone 共享 Skills 合集，跨 AI CLI 平台使用。
 
 **完整教程**（安装细节、hooks 注册、OpenCode/QoderCLI 接入、工作原理、排查 FAQ）：见 [share-task-skill/README.md](share-task-skill/README.md)。
 
-### isoftstone-debug-recovery
+### isoftstone
+
+isoftstone 团队插件，当前包含 skill `isoftstone-debug-recovery`（调用名 `isoftstone:isoftstone-debug-recovery`）。
 
 Bug 修复编排工作流。以 `debugging-and-error-recovery` 做根因分析，方案经用户确认后修复，再经 `requesting-code-review` 审查；自动区分前端 / 后端 / 双端问题，双端派发前后端独立 subagent 串行执行（接口变更先后端再前端），TaskList 跟踪状态、文件黑板做后端→前端交接。
 
 | 用法 | 说明 |
 |---|---|
-| `/isoftstone-debug-recovery <问题描述> [前端路径] [后端路径]` | 手动调用；路径选填 |
-| "修 bug / 定位问题 / 排查 / debug…" | 自然语言自动触发 |
+| `/isoftstone:isoftstone-debug-recovery <问题描述> [前端路径] [后端路径]` | 手动调用；路径选填 |
+| "修 bug / 定位问题 / 排查 / debug…" | 自然语言自动触发，不受命名空间影响 |
 
 与 [share-task](#share-task) 互不冲突：share-task 管跨会话/跨平台的任务共享黑板，本插件管单会话内的 bug 修复编排（工作区本地 `.debug-recovery/` 黑板 + 内置 TaskList），可同时启用；修复完成后可用 share-task 把摘要投递给其他平台。
 
-完整说明：见 [isoftstone-debug-recovery-skill/README.md](isoftstone-debug-recovery-skill/README.md)。
+完整说明：见 [isoftstone-skill/README.md](isoftstone-skill/README.md)。
 
 ## 依赖
 
